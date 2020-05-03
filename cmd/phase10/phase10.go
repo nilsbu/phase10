@@ -20,5 +20,5 @@ func main() {
 		}
 	}
 
-	fmt.Printf("winner is '%v'", game.Players[game.GetWinner()].Name)
+	fmt.Printf("winner is '%v'\n", game.Players[game.GetWinner()].Name)
 }

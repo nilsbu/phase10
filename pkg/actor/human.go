@@ -50,8 +50,16 @@ func (h *Human) put(g *game.Game) error {
 		}
 
 		cmds := splitAddString(text)
+		cards := []int{}
 		for _, cmd := range cmds {
-			g.Append(cmd.cardIdx-1, cmd.sequenceIdx-1, cmd.left)
+			cards = append(cards, cmd.cardIdx)
+		}
+		cardIdxs, err := findCards(cards, g.Players[g.Turn].Cards)
+		if err != nil {
+			return err
+		}
+		for i, cmd := range cmds {
+			g.Append(cardIdxs[i], cmd.sequenceIdx-1, cmd.left)
 		}
 
 	} else {
@@ -63,12 +71,15 @@ func (h *Human) put(g *game.Game) error {
 		}
 
 		cmds := splitCOString(text)
+		cardIdxs := [][]int{}
 		for _, cmd := range cmds {
-			for i := 0; i < len(cmd); i++ {
-				cmd[i]--
+			idxs, err := findCards(cmd, g.Players[g.Turn].Cards)
+			if err != nil {
+				return err
 			}
+			cardIdxs = append(cardIdxs, idxs)
 		}
-		g.ComeOut(cmds)
+		g.ComeOut(cardIdxs)
 
 		h.put(g)
 	}
@@ -123,8 +134,12 @@ func (h *Human) drop(g *game.Game) error {
 	if err != nil {
 		return err
 	}
-	idx, _ := strconv.Atoi(text)
-	g.Drop(idx - 1)
+	card, _ := strconv.Atoi(text)
+	idxs, err := findCards([]int{card}, g.Players[g.Turn].Cards)
+	if err != nil {
+		return err
+	}
+	g.Drop(idxs[0])
 	return nil
 }
 
@@ -146,4 +161,25 @@ func read(prompt, regex string) (string, error) {
 			return text, nil
 		}
 	}
+}
+
+func findCards(want []int, has game.Cards) (idxs []int, err error) {
+	found := make([]bool, len(has))
+
+	for _, w := range want {
+		f := false
+		for i, h := range has {
+			if game.Card(w) == h && !found[i] {
+				found[i] = true
+				idxs = append(idxs, i)
+				f = true
+				break
+			}
+		}
+		if !f {
+			return []int{}, fmt.Errorf("card '%v' not found", w)
+		}
+	}
+
+	return
 }
