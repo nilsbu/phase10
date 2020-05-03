@@ -16,6 +16,7 @@ func main() {
 	for !game.IsDone() {
 		actor := &a.Human{}
 		if err := actor.Play(game); err != nil {
+			fmt.Println(err)
 			return
 		}
 	}

@@ -117,7 +117,10 @@ func TestDrawFromStackAndDrop(t *testing.T) {
 			game.Turn)
 	}
 
-	game.Drop(9)
+	err := game.Drop(9)
+	if err != nil {
+		t.Fatalf("unexpected error")
+	}
 
 	expected = Cards{2, 3, 3, 4, 4, 6, 6, 7, 8, 13} // 12 got dropped
 	if !reflect.DeepEqual(game.Players[0].Cards, expected) {
@@ -132,6 +135,11 @@ func TestDrawFromStackAndDrop(t *testing.T) {
 		t.Errorf("expected it to be 1's turn but it's %v's",
 			game.Turn)
 	}
+
+	err = game.Drop(-1)
+	if err == nil {
+		t.Fatalf("expected error for negative index but none occurred")
+	}
 }
 
 func TestComeOut(t *testing.T) {
@@ -145,6 +153,7 @@ func TestComeOut(t *testing.T) {
 		idxSeq     [][]int
 		cardsAfter Cards
 		outAfter   []Cards
+		err        bool
 	}{
 		{
 			"phase 1",
@@ -160,6 +169,7 @@ func TestComeOut(t *testing.T) {
 			[][]int{{3, 4, 5}, {7, 10, 8, 9}},
 			Cards{2, 3, 4, 6},
 			[]Cards{{5, 5, 5}, {8, 13, 8, 8}},
+			false,
 		},
 		{
 			"phase 2", // TODO is that phase 2?
@@ -177,6 +187,7 @@ func TestComeOut(t *testing.T) {
 			[][]int{{0, 1, 2}, {8, 9, 10}},
 			Cards{2, 6, 9, 9, 10},
 			[]Cards{{1, 1, 1}, {11, 11, 13}},
+			false,
 		},
 		{
 			"phase 1+",
@@ -194,14 +205,89 @@ func TestComeOut(t *testing.T) {
 			[][]int{{0, 1, 2, 3}, {4, 5, 6}},
 			Cards{7, 7, 10, 10},
 			[]Cards{{9, 9, 9}, {11, 11, 11}, {1, 1, 1, 1}, {5, 5, 5}},
+			false,
+		},
+		{
+			"no  cards",
+			&Game{
+				Players: []Player{
+					{Name: "P1",
+						Cards: Cards{6, 7, 7, 8},
+						Phase: 1, Out: true},
+					{Name: "P2",
+						Cards: Cards{1, 1, 1, 1, 5, 5, 5, 7, 7, 10, 10},
+						Phase: 1, Out: false}},
+				OutCards: []Cards{{9, 9, 9}, {11, 11, 11}},
+				Turn:     1, Trash: -1,
+			},
+			[][]int{},
+			Cards{1, 1, 1, 1, 5, 5, 5, 7, 7, 10, 10},
+			[]Cards{{9, 9, 9}, {11, 11, 11}},
+			true,
+		},
+		{
+			"invalid sequence",
+			&Game{
+				Players: []Player{
+					{Name: "P1",
+						Cards: Cards{6, 7, 7, 8},
+						Phase: 1, Out: true},
+					{Name: "P2",
+						Cards: Cards{1, 1, 1, 1, 4, 5, 6, 7, 7, 10, 10},
+						Phase: 1, Out: false}},
+				OutCards: []Cards{{9, 9, 9}, {11, 11, 11}},
+				Turn:     1, Trash: -1,
+			},
+			[][]int{{0, 1, 2, 3}, {4, 5, 7}},
+			Cards{1, 1, 1, 1, 4, 5, 6, 7, 7, 10, 10},
+			[]Cards{{9, 9, 9}, {11, 11, 11}},
+			true,
+		},
+		{
+			"duplicate card",
+			&Game{
+				Players: []Player{
+					{Name: "P1",
+						Cards: Cards{6, 7, 7, 8},
+						Phase: 1, Out: true},
+					{Name: "P2",
+						Cards: Cards{1, 1, 1, 1, 5, 5, 5, 7, 7, 10, 10},
+						Phase: 1, Out: false}},
+				OutCards: []Cards{{9, 9, 9}, {11, 11, 11}},
+				Turn:     1, Trash: -1,
+			},
+			[][]int{{0, 1, 2, 3}, {4, 5, 5}},
+			Cards{1, 1, 1, 1, 5, 5, 5, 7, 7, 10, 10},
+			[]Cards{{9, 9, 9}, {11, 11, 11}},
+			true,
+		},
+		{
+			"phase 1+",
+			&Game{
+				Players: []Player{
+					{Name: "P1",
+						Cards: Cards{6, 7, 7, 8},
+						Phase: 1, Out: true},
+					{Name: "P2",
+						Cards: Cards{1, 1, 1, 1, 5, 5, 5, 7, 7, 10, 10},
+						Phase: 1, Out: true}},
+				OutCards: []Cards{{9, 9, 9}, {11, 11, 11}},
+				Turn:     1, Trash: -1,
+			},
+			[][]int{{0, 1, 2, 3}, {4, 5, 6}},
+			Cards{1, 1, 1, 1, 5, 5, 5, 7, 7, 10, 10},
+			[]Cards{{9, 9, 9}, {11, 11, 11}},
+			true,
 		},
 	}
 
 	for _, c := range cs {
 		t.Run(c.name, func(t *testing.T) {
 			player := c.game.Turn
-			c.game.ComeOut(c.idxSeq)
-
+			err := c.game.ComeOut(c.idxSeq)
+			if (err != nil) != c.err {
+				t.Errorf("wrong error")
+			}
 			if !reflect.DeepEqual(c.game.Players[player].Cards, c.cardsAfter) {
 				t.Errorf("expected the player's cards to be '%v' but got '%v'",
 					c.cardsAfter, c.game.Players[player].Cards)
@@ -210,7 +296,7 @@ func TestComeOut(t *testing.T) {
 				t.Errorf("expected out cards to be '%v' but got '%v'",
 					c.outAfter, c.game.OutCards)
 			}
-			if !c.game.Players[player].Out {
+			if err == nil && !c.game.Players[player].Out {
 				t.Errorf("player is not out")
 			}
 		})
@@ -229,6 +315,7 @@ func TestAppend(t *testing.T) {
 		left       bool
 		cardsAfter Cards
 		outAfter   []Cards
+		err        bool
 	}{
 		{
 			"append right",
@@ -242,6 +329,7 @@ func TestAppend(t *testing.T) {
 			1, 1, false,
 			Cards{5, 10, 12},
 			[]Cards{{1, 2, 3}, {6, 13, 8, 9}},
+			false,
 		},
 		{
 			"append left",
@@ -255,13 +343,101 @@ func TestAppend(t *testing.T) {
 			0, 1, true,
 			Cards{9, 10, 12},
 			[]Cards{{1, 2, 3}, {5, 6, 13, 8}},
+			false,
+		},
+		{
+			"card oob right",
+			&Game{
+				Players: []Player{p1, {Name: "P2",
+					Cards: Cards{5, 9, 10, 12},
+					Phase: 10, Out: true}},
+				OutCards: []Cards{{1, 2, 3}, {6, 13, 8}},
+				Turn:     1, Trash: 11,
+			},
+			10, 1, true,
+			Cards{5, 9, 10, 12},
+			[]Cards{{1, 2, 3}, {6, 13, 8}},
+			true,
+		},
+		{
+			"card oob left",
+			&Game{
+				Players: []Player{p1, {Name: "P2",
+					Cards: Cards{5, 9, 10, 12},
+					Phase: 10, Out: true}},
+				OutCards: []Cards{{1, 2, 3}, {6, 13, 8}},
+				Turn:     1, Trash: 11,
+			},
+			-1, 1, true,
+			Cards{5, 9, 10, 12},
+			[]Cards{{1, 2, 3}, {6, 13, 8}},
+			true,
+		},
+		{
+			"sequence oob right",
+			&Game{
+				Players: []Player{p1, {Name: "P2",
+					Cards: Cards{5, 9, 10, 12},
+					Phase: 10, Out: true}},
+				OutCards: []Cards{{1, 2, 3}, {6, 13, 8}},
+				Turn:     1, Trash: 11,
+			},
+			0, 2, true,
+			Cards{5, 9, 10, 12},
+			[]Cards{{1, 2, 3}, {6, 13, 8}},
+			true,
+		},
+		{
+			"sequence oob left",
+			&Game{
+				Players: []Player{p1, {Name: "P2",
+					Cards: Cards{5, 9, 10, 12},
+					Phase: 10, Out: true}},
+				OutCards: []Cards{{1, 2, 3}, {6, 13, 8}},
+				Turn:     1, Trash: 11,
+			},
+			0, -1, true,
+			Cards{5, 9, 10, 12},
+			[]Cards{{1, 2, 3}, {6, 13, 8}},
+			true,
+		},
+		{
+			"invalid append",
+			&Game{
+				Players: []Player{p1, {Name: "P2",
+					Cards: Cards{5, 9, 10, 12},
+					Phase: 10, Out: true}},
+				OutCards: []Cards{{1, 2, 3}, {6, 13, 8}},
+				Turn:     1, Trash: 11,
+			},
+			0, 1, false,
+			Cards{5, 9, 10, 12},
+			[]Cards{{1, 2, 3}, {6, 13, 8}},
+			true,
+		},
+		{
+			"append left",
+			&Game{
+				Players: []Player{p1, {Name: "P2",
+					Cards: Cards{5, 9, 10, 12},
+					Phase: 10, Out: false}},
+				OutCards: []Cards{{1, 2, 3}, {6, 13, 8}},
+				Turn:     1, Trash: 11,
+			},
+			0, 1, true,
+			Cards{5, 9, 10, 12},
+			[]Cards{{1, 2, 3}, {6, 13, 8}},
+			true,
 		},
 	}
 
 	for _, c := range cs {
 		t.Run(c.name, func(t *testing.T) {
 			player := c.game.Turn
-			c.game.Append(c.card, c.seq, c.left)
+			err := c.game.Append(c.card, c.seq, c.left)
+			if (err != nil) != c.err {
+				t.Errorf("wrong error")
+			}
 
 			if !reflect.DeepEqual(c.game.Players[player].Cards, c.cardsAfter) {
 				t.Errorf("expected the player's cards to be '%v' but got '%v'",
@@ -270,9 +446,6 @@ func TestAppend(t *testing.T) {
 			if !reflect.DeepEqual(c.game.OutCards, c.outAfter) {
 				t.Errorf("expected out cards to be '%v' but got '%v'",
 					c.outAfter, c.game.OutCards)
-			}
-			if !c.game.Players[player].Out {
-				t.Errorf("player is not out")
 			}
 		})
 	}

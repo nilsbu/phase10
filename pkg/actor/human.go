@@ -2,7 +2,6 @@ package actor
 
 import (
 	"bufio"
-	"errors"
 	"fmt"
 	"os"
 	"regexp"
@@ -16,14 +15,26 @@ import (
 type Human struct{}
 
 func (h *Human) Play(g *game.Game) error {
-	if err := h.draw(g); err != nil {
-		return err
+	for {
+		if err := h.draw(g); err == nil {
+			break
+		} else {
+			fmt.Println(err)
+		}
 	}
-	if err := h.put(g); err != nil {
-		return err
+	for {
+		if err := h.put(g); err == nil {
+			break
+		} else {
+			fmt.Println(err)
+		}
 	}
-	if err := h.drop(g); err != nil {
-		return err
+	for {
+		if err := h.drop(g); err == nil {
+			break
+		} else {
+			fmt.Println(err)
+		}
 	}
 	return nil
 }
@@ -59,7 +70,14 @@ func (h *Human) put(g *game.Game) error {
 			return err
 		}
 		for i, cmd := range cmds {
-			g.Append(cardIdxs[i], cmd.sequenceIdx-1, cmd.left)
+			if err = g.Append(cardIdxs[i], cmd.sequenceIdx-1, cmd.left); err != nil {
+				return err
+			}
+			for j := i + 1; j < len(cmds); j++ {
+				if cardIdxs[j] > cardIdxs[i] {
+					cardIdxs[j]--
+				}
+			}
 		}
 
 	} else {
@@ -79,9 +97,13 @@ func (h *Human) put(g *game.Game) error {
 			}
 			cardIdxs = append(cardIdxs, idxs)
 		}
-		g.ComeOut(cardIdxs)
 
-		h.put(g)
+		if err := g.ComeOut(cardIdxs); err != nil {
+			return err
+		}
+		if err := h.put(g); err != nil {
+			return err
+		}
 	}
 	return nil
 }
@@ -139,8 +161,7 @@ func (h *Human) drop(g *game.Game) error {
 	if err != nil {
 		return err
 	}
-	g.Drop(idxs[0])
-	return nil
+	return g.Drop(idxs[0])
 }
 
 func read(prompt, regex string) (string, error) {
@@ -155,9 +176,7 @@ func read(prompt, regex string) (string, error) {
 		}
 		text = text[:len(text)-1]
 
-		if text == "quit" {
-			return "", errors.New("quit")
-		} else if re.MatchString(text) {
+		if re.MatchString(text) {
 			return text, nil
 		}
 	}
