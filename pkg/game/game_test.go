@@ -315,6 +315,24 @@ func TestComeOut(t *testing.T) {
 			[]Cards{{3, 13, 13}, {5, 5, 13}},
 			false,
 		},
+		{
+			"phase 2: cards ambiguous",
+			&Game{
+				Players: []Player{
+					{Name: "P1",
+						Cards: Cards{6, 7, 7, 8},
+						Phase: 1, Out: true},
+					{Name: "P2",
+						Cards: Cards{2, 2, 4, 5, 9, 11, 11, 12, 13, 13, 13},
+						Phase: 2, Out: false}},
+				OutCards: []Cards{},
+				Turn:     1, Trash: -1,
+			},
+			[][]int{{0, 8, 2, 3}, {5, 6, 9, 10}},
+			Cards{2, 9, 12},
+			[]Cards{{2, 13, 4, 5}, {11, 11, 13, 13}},
+			false,
+		},
 	}
 
 	for _, c := range cs {

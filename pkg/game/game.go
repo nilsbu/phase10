@@ -102,7 +102,7 @@ func (g *Game) ComeOut(idxSeq [][]int) error {
 		return errors.New("no cards")
 	}
 	if containsDuplicates(idxSeq) {
-		return errors.New("cards contain duplicates")
+		return fmt.Errorf("cards contain duplicates (%v)", idxSeq)
 	}
 	if g.Players[g.Turn].Out {
 		return errors.New("player is already out")

@@ -89,13 +89,20 @@ func (h *Human) put(g *game.Game) error {
 		}
 
 		cmds := splitCOString(text)
+		flatCmds := []int{}
+		for _, cmd := range cmds {
+			flatCmds = append(flatCmds, cmd...)
+		}
+		idxs, err := findCards(flatCmds, g.Players[g.Turn].Cards)
+		if err != nil {
+			return err
+		}
+
+		idxOffset := 0
 		cardIdxs := [][]int{}
 		for _, cmd := range cmds {
-			idxs, err := findCards(cmd, g.Players[g.Turn].Cards)
-			if err != nil {
-				return err
-			}
-			cardIdxs = append(cardIdxs, idxs)
+			cardIdxs = append(cardIdxs, idxs[idxOffset:idxOffset+len(cmd)])
+			idxOffset += len(cmd)
 		}
 
 		if err := g.ComeOut(cardIdxs); err != nil {
