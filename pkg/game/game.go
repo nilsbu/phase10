@@ -215,7 +215,7 @@ func (g *Game) GetWinner() int {
 	}
 	winner := -1
 	for i, p := range g.Players {
-		if p.Phase == 10 {
+		if p.Phase == 10 && p.Out {
 			if winner == -1 {
 				winner = i
 			} else if len(p.Cards) == 0 && len(g.Players[winner].Cards) > 0 {

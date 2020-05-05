@@ -29,6 +29,9 @@ func (h *Human) Play(g *game.Game) error {
 			fmt.Println(err)
 		}
 	}
+	if len(g.Players[g.Turn].Cards) == 0 {
+		return nil
+	}
 	for {
 		if err := h.drop(g); err == nil {
 			break

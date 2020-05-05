@@ -634,6 +634,21 @@ func TestIsDone(t *testing.T) {
 			},
 			true, -1,
 		},
+		{
+			"all done all phase 10",
+			&Game{
+				Players: []Player{
+					{Name: "P1",
+						Cards: Cards{6, 7, 8},
+						Phase: 10, Out: false},
+					{Name: "P2",
+						Cards: Cards{},
+						Phase: 8, Out: true}},
+				OutCards: []Cards{},
+				Turn:     0, Trash: 11,
+			},
+			true, -1,
+		},
 	}
 
 	for _, c := range cs {
