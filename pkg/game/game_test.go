@@ -471,10 +471,9 @@ func TestAppend(t *testing.T) {
 
 func TestIsDone(t *testing.T) {
 	cs := []struct {
-		name   string
-		game   *Game
-		done   bool
-		winner int
+		name string
+		game *Game
+		done bool
 	}{
 		{
 			"not done",
@@ -489,10 +488,10 @@ func TestIsDone(t *testing.T) {
 				OutCards: []Cards{},
 				Turn:     0, Trash: 11,
 			},
-			false, -1,
+			false,
 		},
 		{
-			"done",
+			"done when one player has no cards",
 			&Game{
 				Players: []Player{
 					{Name: "P1",
@@ -504,19 +503,31 @@ func TestIsDone(t *testing.T) {
 				OutCards: []Cards{},
 				Turn:     0, Trash: 11,
 			},
-			true, 1,
+			true,
+		},
+		{
+			"done when all are out",
+			&Game{
+				Players: []Player{
+					{Name: "P1",
+						Cards: Cards{2, 3, 4, 5, 5, 5, 6, 8, 8, 8, 13},
+						Phase: 1, Out: true},
+					{Name: "P2",
+						Cards: Cards{3, 3},
+						Phase: 10, Out: true}},
+				OutCards: []Cards{},
+				Turn:     0, Trash: 11,
+			},
+			true,
 		},
 	}
 
 	for _, c := range cs {
 		t.Run(c.name, func(t *testing.T) {
-			done, winner := c.game.IsDone(), c.game.GetWinner()
+			done := c.game.IsDone()
 			if done {
 				if !c.done {
 					t.Fatalf("shouldn't be done but is")
-				}
-				if winner != c.winner {
-					t.Errorf("expected winner to be %v but is %v", c.winner, winner)
 				}
 			} else {
 				if c.done {

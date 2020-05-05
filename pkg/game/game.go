@@ -201,21 +201,15 @@ func (g *Game) Append(card, sequence int, left bool) error {
 }
 
 func (g *Game) IsDone() bool {
+	allOut := true
 	for _, p := range g.Players {
 		if len(p.Cards) == 0 {
 			return true
 		}
-	}
-
-	return false
-}
-
-func (g *Game) GetWinner() int {
-	for i, p := range g.Players {
-		if len(p.Cards) == 0 {
-			return i
+		if !p.Out {
+			allOut = false
 		}
 	}
 
-	return -1
+	return allOut
 }

@@ -20,6 +20,4 @@ func main() {
 			return
 		}
 	}
-
-	fmt.Printf("winner is '%v'\n", game.Players[game.GetWinner()].Name)
 }
