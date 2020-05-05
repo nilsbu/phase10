@@ -72,8 +72,14 @@ func TestFindCards(t *testing.T) {
 		{
 			[]int{1, 4, 4, 8, 8},
 			game.Cards{1, 1, 2, 4, 4, 4, 7, 8, 9},
-			[]int{0, 3, 4, 7},
+			[]int{},
 			errors.New("no 2nd 8"),
+		},
+		{
+			[]int{3, 13, 13, 5, 5, 13},
+			game.Cards{2, 3, 5, 5, 7, 8, 9, 10, 13, 13, 13},
+			[]int{1, 8, 9, 2, 3, 10},
+			nil,
 		},
 	}
 

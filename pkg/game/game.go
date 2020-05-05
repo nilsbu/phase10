@@ -117,13 +117,8 @@ func (g *Game) ComeOut(idxSeq [][]int) error {
 			cards = append(cards, g.Players[g.Turn].Cards[idx])
 		}
 
-		seq := validate(cards)
-		if seq.Type == Invalid || seq.Type == Ambiguous {
-			return errors.New("invalid cards")
-		}
-
 		cardss = append(cardss, cards)
-		seqs = append(seqs, seq)
+		seqs = append(seqs, validate(cards))
 	}
 
 	if !isPhaseFulfilled(seqs, g.Players[g.Turn].Phase) {

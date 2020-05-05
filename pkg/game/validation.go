@@ -15,7 +15,14 @@ type Sequence struct {
 }
 
 func (s Sequence) Fulfills(target Sequence) bool {
-	return s.Type == target.Type && s.N >= target.N
+	if s.Type == Invalid {
+		return false
+	} else if s.Type == target.Type ||
+		s.Type == Ambiguous ||
+		target.Type == Ambiguous {
+		return s.N >= target.N
+	}
+	return false
 }
 
 func validate(cards Cards) Sequence {

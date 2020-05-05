@@ -52,7 +52,7 @@ func TestIsPhaseFulfilled(t *testing.T) {
 		{
 			"phase 1: ambiguous sequence",
 			[]Sequence{{Kind, 3}, {Ambiguous, 3}},
-			1, false,
+			1, true,
 		},
 		{
 			"phase 1: no sequences",

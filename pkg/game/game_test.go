@@ -297,14 +297,34 @@ func TestComeOut(t *testing.T) {
 			[]Cards{{9, 9, 9}, {11, 11, 11}},
 			true,
 		},
+		{
+			"phase 1 mixed order",
+			&Game{
+				Players: []Player{
+					{Name: "P1",
+						Cards: Cards{6, 7, 7, 8},
+						Phase: 1, Out: true},
+					{Name: "P2",
+						Cards: Cards{2, 3, 5, 5, 7, 8, 9, 10, 13, 13, 13},
+						Phase: 1, Out: false}},
+				OutCards: []Cards{},
+				Turn:     1, Trash: -1,
+			},
+			[][]int{{1, 8, 9}, {2, 3, 10}},
+			Cards{2, 7, 8, 9, 10},
+			[]Cards{{3, 13, 13}, {5, 5, 13}},
+			false,
+		},
 	}
 
 	for _, c := range cs {
 		t.Run(c.name, func(t *testing.T) {
 			player := c.game.Turn
 			err := c.game.ComeOut(c.idxSeq)
-			if (err != nil) != c.err {
-				t.Errorf("wrong error")
+			if err != nil && !c.err {
+				t.Errorf("unexpected error: %v", err)
+			} else if err == nil && c.err {
+				t.Errorf("expected error but none occurred")
 			}
 			if !reflect.DeepEqual(c.game.Players[player].Cards, c.cardsAfter) {
 				t.Errorf("expected the player's cards to be '%v' but got '%v'",
