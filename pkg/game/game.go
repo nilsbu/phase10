@@ -228,3 +228,17 @@ func (g *Game) GetWinner() int {
 
 	return winner
 }
+
+func (g *Game) NextRound() {
+	for i := range g.Players {
+		g.Players[i].Cards = serveN(InitialCards)
+
+		if g.Players[i].Out {
+			g.Players[i].Out = false
+			g.Players[i].Phase++
+		}
+	}
+
+	g.OutCards = []Cards{}
+	g.Trash = serve()
+}

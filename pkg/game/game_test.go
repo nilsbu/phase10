@@ -636,3 +636,49 @@ func TestIsDone(t *testing.T) {
 		})
 	}
 }
+
+func TestNextRound(t *testing.T) {
+	cs := []struct {
+		name     string
+		gamePre  *Game
+		gamePost *Game
+	}{
+		{
+			"",
+			&Game{
+				Players: []Player{
+					{Name: "P1",
+						Cards: Cards{1, 2, 3, 4, 5, 6, 7, 8, 9, 9},
+						Phase: 1, Out: false},
+					{Name: "P2",
+						Cards: Cards{10, 11, 13},
+						Phase: 3, Out: true}},
+				OutCards: []Cards{{1, 1, 1}},
+				Turn:     1, Trash: 11,
+			},
+			&Game{
+				Players: []Player{
+					{Name: "P1",
+						Cards: Cards{2, 3, 3, 4, 4, 6, 7, 8, 12, 13},
+						Phase: 1, Out: false},
+					{Name: "P2",
+						Cards: Cards{2, 3, 4, 4, 7, 7, 7, 8, 11, 13},
+						Phase: 4, Out: false}},
+				OutCards: []Cards{},
+				Turn:     1, Trash: 6,
+			},
+		},
+	}
+
+	for _, c := range cs {
+		t.Run(c.name, func(t *testing.T) {
+			rand.Seed(0)
+			c.gamePre.NextRound()
+
+			if !reflect.DeepEqual(c.gamePre, c.gamePost) {
+				t.Errorf("game is wrong\nwant: %v\nhas:  %v",
+					c.gamePost, c.gamePre)
+			}
+		})
+	}
+}
