@@ -262,7 +262,7 @@ func TestComeOut(t *testing.T) {
 			true,
 		},
 		{
-			"phase 1+",
+			"already out",
 			&Game{
 				Players: []Player{
 					{Name: "P1",
@@ -276,6 +276,24 @@ func TestComeOut(t *testing.T) {
 			},
 			[][]int{{0, 1, 2, 3}, {4, 5, 6}},
 			Cards{1, 1, 1, 1, 5, 5, 5, 7, 7, 10, 10},
+			[]Cards{{9, 9, 9}, {11, 11, 11}},
+			true,
+		},
+		{
+			"phase 1 not fulfilled",
+			&Game{
+				Players: []Player{
+					{Name: "P1",
+						Cards: Cards{6, 7, 7, 8},
+						Phase: 1, Out: true},
+					{Name: "P2",
+						Cards: Cards{1, 1, 1, 1, 4, 5, 6, 7, 7, 10, 10},
+						Phase: 1, Out: false}},
+				OutCards: []Cards{{9, 9, 9}, {11, 11, 11}},
+				Turn:     1, Trash: -1,
+			},
+			[][]int{{0, 1, 2, 3}, {4, 5, 6}},
+			Cards{1, 1, 1, 1, 4, 5, 6, 7, 7, 10, 10},
 			[]Cards{{9, 9, 9}, {11, 11, 11}},
 			true,
 		},

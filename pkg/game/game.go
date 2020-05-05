@@ -109,6 +109,7 @@ func (g *Game) ComeOut(idxSeq [][]int) error {
 	}
 
 	var cardss []Cards
+	var seqs []Sequence
 
 	for _, idxs := range idxSeq {
 		cards := Cards{}
@@ -122,6 +123,11 @@ func (g *Game) ComeOut(idxSeq [][]int) error {
 		}
 
 		cardss = append(cardss, cards)
+		seqs = append(seqs, seq)
+	}
+
+	if !isPhaseFulfilled(seqs, g.Players[g.Turn].Phase) {
+		return errors.New("phase is not fulfilled")
 	}
 
 	for _, cards := range cardss {

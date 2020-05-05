@@ -14,6 +14,10 @@ type Sequence struct {
 	N    int
 }
 
+func (s Sequence) Fulfills(target Sequence) bool {
+	return s.Type == target.Type && s.N >= target.N
+}
+
 func validate(cards Cards) Sequence {
 	if len(cards) == 0 {
 		return Sequence{Invalid, 0}
