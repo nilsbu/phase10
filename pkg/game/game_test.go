@@ -491,9 +491,10 @@ func TestAppend(t *testing.T) {
 
 func TestIsDone(t *testing.T) {
 	cs := []struct {
-		name string
-		game *Game
-		done bool
+		name   string
+		game   *Game
+		done   bool
+		winner int
 	}{
 		{
 			"not done",
@@ -508,10 +509,40 @@ func TestIsDone(t *testing.T) {
 				OutCards: []Cards{},
 				Turn:     0, Trash: 11,
 			},
-			false,
+			false, -1,
 		},
 		{
 			"done when one player has no cards",
+			&Game{
+				Players: []Player{
+					{Name: "P1",
+						Cards: Cards{2, 3, 4, 5, 5, 5, 6, 8, 8, 8, 13},
+						Phase: 1, Out: false},
+					{Name: "P2",
+						Cards: Cards{},
+						Phase: 9, Out: true}},
+				OutCards: []Cards{},
+				Turn:     0, Trash: 11,
+			},
+			true, -1,
+		},
+		{
+			"done when all are out",
+			&Game{
+				Players: []Player{
+					{Name: "P1",
+						Cards: Cards{2, 3, 4, 5, 5, 5, 6, 8, 8, 8, 13},
+						Phase: 1, Out: true},
+					{Name: "P2",
+						Cards: Cards{3, 3},
+						Phase: 9, Out: true}},
+				OutCards: []Cards{},
+				Turn:     0, Trash: 11,
+			},
+			true, -1,
+		},
+		{
+			"done when one player has no cards with winner",
 			&Game{
 				Players: []Player{
 					{Name: "P1",
@@ -523,10 +554,10 @@ func TestIsDone(t *testing.T) {
 				OutCards: []Cards{},
 				Turn:     0, Trash: 11,
 			},
-			true,
+			true, 1,
 		},
 		{
-			"done when all are out",
+			"done when all are out with winner",
 			&Game{
 				Players: []Player{
 					{Name: "P1",
@@ -538,13 +569,58 @@ func TestIsDone(t *testing.T) {
 				OutCards: []Cards{},
 				Turn:     0, Trash: 11,
 			},
-			true,
+			true, 1,
+		},
+		{
+			"winner ambiguous",
+			&Game{
+				Players: []Player{
+					{Name: "P1",
+						Cards: Cards{2, 3, 4, 5, 5, 5, 6, 8, 8, 8, 13},
+						Phase: 10, Out: true},
+					{Name: "P2",
+						Cards: Cards{3, 3},
+						Phase: 10, Out: true}},
+				OutCards: []Cards{},
+				Turn:     0, Trash: 11,
+			},
+			true, -1,
+		},
+		{
+			"done when one player has no cards with winner when all are phase 10",
+			&Game{
+				Players: []Player{
+					{Name: "P1",
+						Cards: Cards{2, 3, 4, 5, 5, 5, 6, 8, 8, 8, 13},
+						Phase: 10, Out: true},
+					{Name: "P2",
+						Cards: Cards{},
+						Phase: 10, Out: true}},
+				OutCards: []Cards{},
+				Turn:     0, Trash: 11,
+			},
+			true, 1,
+		},
+		{
+			"all done all phase 10",
+			&Game{
+				Players: []Player{
+					{Name: "P1",
+						Cards: Cards{},
+						Phase: 10, Out: true},
+					{Name: "P2",
+						Cards: Cards{},
+						Phase: 10, Out: true}},
+				OutCards: []Cards{},
+				Turn:     0, Trash: 11,
+			},
+			true, -1,
 		},
 	}
 
 	for _, c := range cs {
 		t.Run(c.name, func(t *testing.T) {
-			done := c.game.IsDone()
+			done, winner := c.game.IsDone(), c.game.GetWinner()
 			if done {
 				if !c.done {
 					t.Fatalf("shouldn't be done but is")
@@ -553,6 +629,9 @@ func TestIsDone(t *testing.T) {
 				if c.done {
 					t.Fatalf("should be done but isn't")
 				}
+			}
+			if winner != c.winner {
+				t.Errorf("expected winner to be %v but is %v", c.winner, winner)
 			}
 		})
 	}

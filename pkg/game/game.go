@@ -208,3 +208,23 @@ func (g *Game) IsDone() bool {
 
 	return allOut
 }
+
+func (g *Game) GetWinner() int {
+	if !g.IsDone() {
+		return -1
+	}
+	winner := -1
+	for i, p := range g.Players {
+		if p.Phase == 10 {
+			if winner == -1 {
+				winner = i
+			} else if len(p.Cards) == 0 && len(g.Players[winner].Cards) > 0 {
+				winner = i
+			} else {
+				return -1
+			}
+		}
+	}
+
+	return winner
+}
