@@ -23,7 +23,7 @@ func TestPrintPlayer(t *testing.T) {
 				Out:   false,
 			},
 			false,
-			"Player 1 (1)\n{X,X,X}\n",
+			"Player 1 (1, K3K3)\n{X,X,X}\n",
 		},
 		{
 			"shown",
@@ -34,18 +34,18 @@ func TestPrintPlayer(t *testing.T) {
 				Out:   false,
 			},
 			true,
-			"Player 1 (1)\n{1,2,b,J}\n",
+			"Player 1 (1, K3K3)\n{1,2,b,J}\n",
 		},
 		{
 			"hidden out",
 			g.Player{
 				Name:  "Player 1",
 				Cards: g.Cards{1, 2, 11, 13},
-				Phase: 1,
+				Phase: 2,
 				Out:   true,
 			},
 			false,
-			"Player 1 (1++)\n{X,X,X,X}\n",
+			"Player 1 (2++, K3S4)\n{X,X,X,X}\n",
 		},
 		{
 			"broken card",
@@ -56,7 +56,7 @@ func TestPrintPlayer(t *testing.T) {
 				Out:   false,
 			},
 			true,
-			"P1 (1)\n{?}\n",
+			"P1 (1, K3K3)\n{?}\n",
 		},
 	}
 

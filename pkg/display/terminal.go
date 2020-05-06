@@ -32,9 +32,29 @@ func printPlayer(p g.Player, visible bool) string {
 		out = "++"
 	}
 	return fmt.Sprintf(
-		"%v (%v%v)\n%v\n",
-		p.Name, p.Phase, out, printCards(p.Cards, visible),
+		"%v (%v%v, %v)\n%v\n",
+		p.Name, p.Phase, out, getPhaseRequirements(p.Phase),
+		printCards(p.Cards, visible),
 	)
+}
+
+func getPhaseRequirements(phase int) string {
+	seqs, _ := g.GetPhaseSequences(phase)
+
+	s := ""
+	for _, seq := range seqs {
+		var k string
+		switch seq.Type {
+		case g.Kind:
+			k = "K"
+		case g.Straight:
+			k = "S"
+		default:
+			k = "?"
+		}
+		s += fmt.Sprintf("%v%v", k, seq.N)
+	}
+	return s
 }
 
 func printOutCards(outCards []g.Cards) string {

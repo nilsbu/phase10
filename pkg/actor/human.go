@@ -44,7 +44,7 @@ func (h *Human) Play(g *game.Game) error {
 
 func (h *Human) draw(g *game.Game) error {
 	fmt.Println(display.PrintGame(g, g.Turn))
-	text, err := read("draw card (s/t)", `^[st]$`)
+	text, err := read("draw card (s/t)", `^[st]?$`)
 	if err != nil {
 		return err
 	}
@@ -56,10 +56,10 @@ func (h *Human) draw(g *game.Game) error {
 func (h *Human) put(g *game.Game) error {
 	fmt.Println(display.PrintGame(g, g.Turn))
 	if g.Players[g.Turn].Out {
-		text, err := read("append", `^(([\d]+[><][\d]+;)+)|-$`)
+		text, err := read("append", `^((([\d]+[><][\d]+;)+)|-|)$`)
 		if err != nil {
 			return err
-		} else if text == "-" {
+		} else if text == "-" || text == "" {
 			return nil
 		}
 
@@ -84,10 +84,10 @@ func (h *Human) put(g *game.Game) error {
 		}
 
 	} else {
-		text, err := read("come out", `^((([\d]+,)*[\d]+;)+)|-$`)
+		text, err := read("come out", `^(((([\d]+,)*[\d]+;)+)|-|)$`)
 		if err != nil {
 			return err
-		} else if text == "-" {
+		} else if text == "-" || text == "" {
 			return nil
 		}
 
