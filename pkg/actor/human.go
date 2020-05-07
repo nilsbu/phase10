@@ -30,6 +30,7 @@ func (h *Human) Play(g *game.Game) error {
 		}
 	}
 	if len(g.Players[g.Turn].Cards) == 0 {
+		g.Turn = (g.Turn + 1) % len(g.Players)
 		return nil
 	}
 	for {
@@ -56,7 +57,7 @@ func (h *Human) draw(g *game.Game) error {
 func (h *Human) put(g *game.Game) error {
 	fmt.Println(display.PrintGame(g, g.Turn))
 	if g.Players[g.Turn].Out {
-		text, err := read("append", `^((([\d]+[><][\d]+;)+)|-|)$`)
+		text, err := read("append", `^((([\dabcJj]+[><][\dabcJj]+;)+)|-|)$`)
 		if err != nil {
 			return err
 		} else if text == "-" || text == "" {
@@ -84,7 +85,7 @@ func (h *Human) put(g *game.Game) error {
 		}
 
 	} else {
-		text, err := read("come out", `^(((([\d]+,)*[\d]+;)+)|-|)$`)
+		text, err := read("come out", `^(((([\dabcJj]+,)*[\dabcJj]+;)+)|-|)$`)
 		if err != nil {
 			return err
 		} else if text == "-" || text == "" {
@@ -132,12 +133,28 @@ func splitAddString(s string) (cmds []addCmd) {
 		}
 		nums := re.Split(str, 2)
 
-		card, _ := strconv.Atoi(nums[0])
+		card := readCard(nums[0])
 		seq, _ := strconv.Atoi(nums[1])
 
 		cmds = append(cmds, addCmd{card, seq, strings.Contains(str, "<")})
 	}
 	return
+}
+
+func readCard(s string) int {
+	switch s {
+	case "a":
+		return 10
+	case "b":
+		return 11
+	case "c":
+		return 12
+	case "J", "j":
+		return 13
+	default:
+		i, _ := strconv.Atoi(s)
+		return i
+	}
 }
 
 func splitCOString(s string) (cmds [][]int) {
@@ -151,8 +168,7 @@ func splitCOString(s string) (cmds [][]int) {
 		var nums []int
 
 		for _, ns := range numStr {
-			num, _ := strconv.Atoi(ns)
-			nums = append(nums, num)
+			nums = append(nums, readCard(ns))
 		}
 
 		cmds = append(cmds, nums)
@@ -162,11 +178,11 @@ func splitCOString(s string) (cmds [][]int) {
 
 func (h *Human) drop(g *game.Game) error {
 	fmt.Println(display.PrintGame(g, g.Turn))
-	text, err := read("drop card", `^[\d]+$`)
+	text, err := read("drop card", `^[\dabcJj]+$`)
 	if err != nil {
 		return err
 	}
-	card, _ := strconv.Atoi(text)
+	card := readCard(text)
 	idxs, err := findCards([]int{card}, g.Players[g.Turn].Cards)
 	if err != nil {
 		return err
