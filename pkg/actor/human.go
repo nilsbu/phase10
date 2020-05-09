@@ -65,22 +65,14 @@ func (h *Human) put(g *game.Game) error {
 		}
 
 		cmds := splitAddString(text)
-		cards := []int{}
+		cards := game.Cards{}
 		for _, cmd := range cmds {
-			cards = append(cards, cmd.cardIdx)
+			cards = append(cards, cmd.card)
 		}
-		cardIdxs, err := findCards(cards, g.Players[g.Turn].Cards)
-		if err != nil {
-			return err
-		}
+
 		for i, cmd := range cmds {
-			if err = g.Append(cardIdxs[i], cmd.sequenceIdx-1, cmd.left); err != nil {
+			if err = g.Append(cards[i], cmd.sequenceIdx-1, cmd.left); err != nil {
 				return err
-			}
-			for j := i + 1; j < len(cmds); j++ {
-				if cardIdxs[j] > cardIdxs[i] {
-					cardIdxs[j]--
-				}
 			}
 		}
 
@@ -93,23 +85,7 @@ func (h *Human) put(g *game.Game) error {
 		}
 
 		cmds := splitCOString(text)
-		flatCmds := []int{}
-		for _, cmd := range cmds {
-			flatCmds = append(flatCmds, cmd...)
-		}
-		idxs, err := findCards(flatCmds, g.Players[g.Turn].Cards)
-		if err != nil {
-			return err
-		}
-
-		idxOffset := 0
-		cardIdxs := [][]int{}
-		for _, cmd := range cmds {
-			cardIdxs = append(cardIdxs, idxs[idxOffset:idxOffset+len(cmd)])
-			idxOffset += len(cmd)
-		}
-
-		if err := g.ComeOut(cardIdxs); err != nil {
+		if err := g.ComeOut(cmds); err != nil {
 			return err
 		}
 		if err := h.put(g); err != nil {
@@ -120,8 +96,9 @@ func (h *Human) put(g *game.Game) error {
 }
 
 type addCmd struct {
-	cardIdx, sequenceIdx int
-	left                 bool
+	card        game.Card
+	sequenceIdx int
+	left        bool
 }
 
 func splitAddString(s string) (cmds []addCmd) {
@@ -141,7 +118,7 @@ func splitAddString(s string) (cmds []addCmd) {
 	return
 }
 
-func readCard(s string) int {
+func readCard(s string) game.Card {
 	switch s {
 	case "a":
 		return 10
@@ -153,11 +130,11 @@ func readCard(s string) int {
 		return 13
 	default:
 		i, _ := strconv.Atoi(s)
-		return i
+		return game.Card(i)
 	}
 }
 
-func splitCOString(s string) (cmds [][]int) {
+func splitCOString(s string) (cmds []game.Cards) {
 	ss := strings.SplitN(s, ";", -1)
 	for _, str := range ss {
 		if len(str) < 2 {
@@ -165,7 +142,7 @@ func splitCOString(s string) (cmds [][]int) {
 		}
 
 		numStr := strings.SplitN(str, ",", -1)
-		var nums []int
+		var nums game.Cards
 
 		for _, ns := range numStr {
 			nums = append(nums, readCard(ns))
@@ -182,12 +159,8 @@ func (h *Human) drop(g *game.Game) error {
 	if err != nil {
 		return err
 	}
-	card := readCard(text)
-	idxs, err := findCards([]int{card}, g.Players[g.Turn].Cards)
-	if err != nil {
-		return err
-	}
-	return g.Drop(idxs[0])
+
+	return g.Drop(game.Card(readCard(text)))
 }
 
 func read(prompt, regex string) (string, error) {

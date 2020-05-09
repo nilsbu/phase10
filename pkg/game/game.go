@@ -81,43 +81,56 @@ func serve() Card {
 	return Card((rand.Int() % CardTypes) + 1)
 }
 
-func (g *Game) Drop(idx int) error {
-	if idx < 0 || idx >= len(g.Players[g.Turn].Cards) {
-		return fmt.Errorf("index out of bounds: %v", idx)
+func (g *Game) Drop(card Card) error {
+	if err := g.removeCards([]Cards{{card}}); err != nil {
+		return err
 	}
 
-	g.Trash = g.Players[g.Turn].Cards[idx]
-
-	g.Players[g.Turn].Cards = append(
-		g.Players[g.Turn].Cards[:idx],
-		g.Players[g.Turn].Cards[idx+1:]...)
+	g.Trash = card
 
 	g.Turn = (g.Turn + 1) % len(g.Players)
 
 	return nil
 }
 
-func (g *Game) ComeOut(idxSeq [][]int) error {
-	if len(idxSeq) == 0 {
-		return errors.New("no cards")
+func (g *Game) removeCards(toRemove []Cards) error {
+	remaining := Cards{}
+	for _, card := range g.Players[g.Turn].Cards {
+		remaining = append(remaining, card)
 	}
-	if containsDuplicates(idxSeq) {
-		return fmt.Errorf("cards contain duplicates (%v)", idxSeq)
+
+	for _, cards := range toRemove {
+		for _, card := range cards {
+			idx, err := findCard(remaining, card)
+			if err != nil {
+				return err
+			}
+			remaining = append(remaining[:idx], remaining[idx+1:]...)
+		}
 	}
+
+	g.Players[g.Turn].Cards = remaining
+	return nil
+}
+
+func findCard(cards Cards, card Card) (idx int, err error) {
+	var c Card
+	for idx, c = range cards {
+		if card == c {
+			return
+		}
+	}
+
+	return -1, fmt.Errorf("card %v not found", card)
+}
+
+func (g *Game) ComeOut(cardss []Cards) error {
 	if g.Players[g.Turn].Out {
 		return errors.New("player is already out")
 	}
 
-	var cardss []Cards
 	var seqs []Sequence
-
-	for _, idxs := range idxSeq {
-		cards := Cards{}
-		for _, idx := range idxs {
-			cards = append(cards, g.Players[g.Turn].Cards[idx])
-		}
-
-		cardss = append(cardss, cards)
+	for _, cards := range cardss {
 		seqs = append(seqs, validate(cards))
 	}
 
@@ -125,47 +138,20 @@ func (g *Game) ComeOut(idxSeq [][]int) error {
 		return errors.New("phase is not fulfilled")
 	}
 
+	if err := g.removeCards(cardss); err != nil {
+		return err
+	}
+
 	for _, cards := range cardss {
 		g.OutCards = append(g.OutCards, cards)
 	}
 
-	var idxs []int
-	for _, xs := range idxSeq {
-		idxs = append(idxs, xs...)
-	}
-	sort.Ints(idxs)
-	newCards := Cards{}
-	j := 0
-	for _, i := range idxs {
-		newCards = append(newCards, g.Players[g.Turn].Cards[j:i]...)
-		j = i + 1
-	}
-	newCards = append(newCards, g.Players[g.Turn].Cards[j:]...)
-
-	g.Players[g.Turn].Cards = newCards
 	g.Players[g.Turn].Out = true
 
 	return nil
 }
 
-func containsDuplicates(idxSeq [][]int) bool {
-	var idxs []int
-	for _, seq := range idxSeq {
-		idxs = append(idxs, seq...)
-	}
-	sort.Ints(idxs)
-	for i := 0; i < len(idxs)-1; i++ {
-		if idxs[i] == idxs[i+1] {
-			return true
-		}
-	}
-	return false
-}
-
-func (g *Game) Append(card, sequence int, left bool) error {
-	if card < 0 || card >= len(g.Players[g.Turn].Cards) {
-		return errors.New("card index out of bounds")
-	}
+func (g *Game) Append(card Card, sequence int, left bool) error {
 	if sequence < 0 || sequence >= len(g.OutCards) {
 		return errors.New("sequence index out of bounds")
 	}
@@ -173,24 +159,22 @@ func (g *Game) Append(card, sequence int, left bool) error {
 		return errors.New("player is not out")
 	}
 
-	c := g.Players[g.Turn].Cards[card]
-
 	var newSeq Cards
 	if left {
-		newSeq = append(Cards{c}, g.OutCards[sequence]...)
+		newSeq = append(Cards{card}, g.OutCards[sequence]...)
 	} else {
-		newSeq = append(g.OutCards[sequence], c)
+		newSeq = append(g.OutCards[sequence], card)
 	}
 
 	if seq := validate(newSeq); seq.Type == Invalid || seq.Type == Ambiguous {
 		return errors.New("sequence invalid")
 	}
 
-	g.OutCards[sequence] = newSeq
+	if err := g.removeCards([]Cards{{card}}); err != nil {
+		return err
+	}
 
-	g.Players[g.Turn].Cards = append(
-		g.Players[g.Turn].Cards[:card],
-		g.Players[g.Turn].Cards[card+1:]...)
+	g.OutCards[sequence] = newSeq
 
 	return nil
 }

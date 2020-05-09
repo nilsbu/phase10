@@ -117,7 +117,7 @@ func TestDrawFromStackAndDrop(t *testing.T) {
 			game.Turn)
 	}
 
-	err := game.Drop(9)
+	err := game.Drop(12)
 	if err != nil {
 		t.Fatalf("unexpected error")
 	}
@@ -150,7 +150,7 @@ func TestComeOut(t *testing.T) {
 	cs := []struct {
 		name       string
 		game       *Game
-		idxSeq     [][]int
+		cardss     []Cards
 		cardsAfter Cards
 		outAfter   []Cards
 		err        bool
@@ -166,7 +166,7 @@ func TestComeOut(t *testing.T) {
 				OutCards: []Cards{},
 				Turn:     0, Trash: 11,
 			},
-			[][]int{{3, 4, 5}, {7, 10, 8, 9}},
+			[]Cards{{5, 5, 5}, {8, 13, 8, 8}},
 			Cards{2, 3, 4, 6},
 			[]Cards{{5, 5, 5}, {8, 13, 8, 8}},
 			false,
@@ -184,7 +184,7 @@ func TestComeOut(t *testing.T) {
 				OutCards: []Cards{},
 				Turn:     0, Trash: 11,
 			},
-			[][]int{{0, 1, 2}, {8, 9, 10}},
+			[]Cards{{1, 1, 1}, {11, 11, 13}},
 			Cards{2, 6, 9, 9, 10},
 			[]Cards{{1, 1, 1}, {11, 11, 13}},
 			false,
@@ -202,7 +202,7 @@ func TestComeOut(t *testing.T) {
 				OutCards: []Cards{{9, 9, 9}, {11, 11, 11}},
 				Turn:     1, Trash: -1,
 			},
-			[][]int{{0, 1, 2, 3}, {4, 5, 6}},
+			[]Cards{{1, 1, 1, 1}, {5, 5, 5}},
 			Cards{7, 7, 10, 10},
 			[]Cards{{9, 9, 9}, {11, 11, 11}, {1, 1, 1, 1}, {5, 5, 5}},
 			false,
@@ -220,7 +220,7 @@ func TestComeOut(t *testing.T) {
 				OutCards: []Cards{{9, 9, 9}, {11, 11, 11}},
 				Turn:     1, Trash: -1,
 			},
-			[][]int{},
+			[]Cards{{9, 9, 9}, {11, 11, 11}},
 			Cards{1, 1, 1, 1, 5, 5, 5, 7, 7, 10, 10},
 			[]Cards{{9, 9, 9}, {11, 11, 11}},
 			true,
@@ -238,7 +238,7 @@ func TestComeOut(t *testing.T) {
 				OutCards: []Cards{{9, 9, 9}, {11, 11, 11}},
 				Turn:     1, Trash: -1,
 			},
-			[][]int{{0, 1, 2, 3}, {4, 5, 7}},
+			[]Cards{{1, 1, 1, 1}, {4, 5, 7}},
 			Cards{1, 1, 1, 1, 4, 5, 6, 7, 7, 10, 10},
 			[]Cards{{9, 9, 9}, {11, 11, 11}},
 			true,
@@ -251,13 +251,13 @@ func TestComeOut(t *testing.T) {
 						Cards: Cards{6, 7, 7, 8},
 						Phase: 1, Out: true},
 					{Name: "P2",
-						Cards: Cards{1, 1, 1, 1, 5, 5, 5, 7, 7, 10, 10},
+						Cards: Cards{1, 1, 1, 1, 5, 5, 6, 7, 7, 10, 10},
 						Phase: 1, Out: false}},
 				OutCards: []Cards{{9, 9, 9}, {11, 11, 11}},
 				Turn:     1, Trash: -1,
 			},
-			[][]int{{0, 1, 2, 3}, {4, 5, 5}},
-			Cards{1, 1, 1, 1, 5, 5, 5, 7, 7, 10, 10},
+			[]Cards{{1, 1, 1, 1}, {5, 5, 5}},
+			Cards{1, 1, 1, 1, 5, 5, 6, 7, 7, 10, 10},
 			[]Cards{{9, 9, 9}, {11, 11, 11}},
 			true,
 		},
@@ -274,7 +274,7 @@ func TestComeOut(t *testing.T) {
 				OutCards: []Cards{{9, 9, 9}, {11, 11, 11}},
 				Turn:     1, Trash: -1,
 			},
-			[][]int{{0, 1, 2, 3}, {4, 5, 6}},
+			[]Cards{{1, 1, 1}, {5, 5, 5}},
 			Cards{1, 1, 1, 1, 5, 5, 5, 7, 7, 10, 10},
 			[]Cards{{9, 9, 9}, {11, 11, 11}},
 			true,
@@ -292,7 +292,7 @@ func TestComeOut(t *testing.T) {
 				OutCards: []Cards{{9, 9, 9}, {11, 11, 11}},
 				Turn:     1, Trash: -1,
 			},
-			[][]int{{0, 1, 2, 3}, {4, 5, 6}},
+			[]Cards{{1, 1, 1}, {5, 5, 5}},
 			Cards{1, 1, 1, 1, 4, 5, 6, 7, 7, 10, 10},
 			[]Cards{{9, 9, 9}, {11, 11, 11}},
 			true,
@@ -310,7 +310,7 @@ func TestComeOut(t *testing.T) {
 				OutCards: []Cards{},
 				Turn:     1, Trash: -1,
 			},
-			[][]int{{1, 8, 9}, {2, 3, 10}},
+			[]Cards{{3, 13, 13}, {5, 5, 13}},
 			Cards{2, 7, 8, 9, 10},
 			[]Cards{{3, 13, 13}, {5, 5, 13}},
 			false,
@@ -328,7 +328,7 @@ func TestComeOut(t *testing.T) {
 				OutCards: []Cards{},
 				Turn:     1, Trash: -1,
 			},
-			[][]int{{0, 8, 2, 3}, {5, 6, 9, 10}},
+			[]Cards{{2, 13, 4, 5}, {11, 11, 13, 13}},
 			Cards{2, 9, 12},
 			[]Cards{{2, 13, 4, 5}, {11, 11, 13, 13}},
 			false,
@@ -338,7 +338,7 @@ func TestComeOut(t *testing.T) {
 	for _, c := range cs {
 		t.Run(c.name, func(t *testing.T) {
 			player := c.game.Turn
-			err := c.game.ComeOut(c.idxSeq)
+			err := c.game.ComeOut(c.cardss)
 			if err != nil && !c.err {
 				t.Errorf("unexpected error: %v", err)
 			} else if err == nil && c.err {
@@ -367,7 +367,8 @@ func TestAppend(t *testing.T) {
 	cs := []struct {
 		name       string
 		game       *Game
-		card, seq  int
+		card       Card
+		seq        int
 		left       bool
 		cardsAfter Cards
 		outAfter   []Cards
@@ -382,7 +383,7 @@ func TestAppend(t *testing.T) {
 				OutCards: []Cards{{1, 2, 3}, {6, 13, 8}},
 				Turn:     1, Trash: 11,
 			},
-			1, 1, false,
+			9, 1, false,
 			Cards{5, 10, 12},
 			[]Cards{{1, 2, 3}, {6, 13, 8, 9}},
 			false,
@@ -396,13 +397,13 @@ func TestAppend(t *testing.T) {
 				OutCards: []Cards{{1, 2, 3}, {6, 13, 8}},
 				Turn:     1, Trash: 11,
 			},
-			0, 1, true,
+			5, 1, true,
 			Cards{9, 10, 12},
 			[]Cards{{1, 2, 3}, {5, 6, 13, 8}},
 			false,
 		},
 		{
-			"card oob right",
+			"no joker in cards",
 			&Game{
 				Players: []Player{p1, {Name: "P2",
 					Cards: Cards{5, 9, 10, 12},
@@ -410,13 +411,13 @@ func TestAppend(t *testing.T) {
 				OutCards: []Cards{{1, 2, 3}, {6, 13, 8}},
 				Turn:     1, Trash: 11,
 			},
-			10, 1, true,
+			13, 1, true,
 			Cards{5, 9, 10, 12},
 			[]Cards{{1, 2, 3}, {6, 13, 8}},
 			true,
 		},
 		{
-			"card oob left",
+			"no 3 in cards",
 			&Game{
 				Players: []Player{p1, {Name: "P2",
 					Cards: Cards{5, 9, 10, 12},
@@ -424,7 +425,7 @@ func TestAppend(t *testing.T) {
 				OutCards: []Cards{{1, 2, 3}, {6, 13, 8}},
 				Turn:     1, Trash: 11,
 			},
-			-1, 1, true,
+			3, 1, true,
 			Cards{5, 9, 10, 12},
 			[]Cards{{1, 2, 3}, {6, 13, 8}},
 			true,
@@ -438,7 +439,7 @@ func TestAppend(t *testing.T) {
 				OutCards: []Cards{{1, 2, 3}, {6, 13, 8}},
 				Turn:     1, Trash: 11,
 			},
-			0, 2, true,
+			5, 2, true,
 			Cards{5, 9, 10, 12},
 			[]Cards{{1, 2, 3}, {6, 13, 8}},
 			true,
@@ -452,7 +453,7 @@ func TestAppend(t *testing.T) {
 				OutCards: []Cards{{1, 2, 3}, {6, 13, 8}},
 				Turn:     1, Trash: 11,
 			},
-			0, -1, true,
+			5, -1, true,
 			Cards{5, 9, 10, 12},
 			[]Cards{{1, 2, 3}, {6, 13, 8}},
 			true,
@@ -466,13 +467,13 @@ func TestAppend(t *testing.T) {
 				OutCards: []Cards{{1, 2, 3}, {6, 13, 8}},
 				Turn:     1, Trash: 11,
 			},
-			0, 1, false,
+			5, 1, false,
 			Cards{5, 9, 10, 12},
 			[]Cards{{1, 2, 3}, {6, 13, 8}},
 			true,
 		},
 		{
-			"append left",
+			"player is not out",
 			&Game{
 				Players: []Player{p1, {Name: "P2",
 					Cards: Cards{5, 9, 10, 12},
@@ -480,7 +481,7 @@ func TestAppend(t *testing.T) {
 				OutCards: []Cards{{1, 2, 3}, {6, 13, 8}},
 				Turn:     1, Trash: 11,
 			},
-			0, 1, true,
+			5, 1, true,
 			Cards{5, 9, 10, 12},
 			[]Cards{{1, 2, 3}, {6, 13, 8}},
 			true,

@@ -35,12 +35,12 @@ func TestSplitCOString(t *testing.T) {
 	cs := []struct {
 		name string
 		str  string
-		cmds [][]int
+		cmds []game.Cards
 	}{
 		{
 			"not done",
 			"1,2,3;4,66,9;",
-			[][]int{
+			[]game.Cards{
 				{1, 2, 3}, {4, 66, 9},
 			},
 		},
