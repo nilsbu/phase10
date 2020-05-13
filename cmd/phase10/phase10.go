@@ -14,7 +14,12 @@ func main() {
 	game := g.SetUp(2, 0)
 
 	for {
-		actor := &a.Human{}
+		var actor a.Actor
+		if game.Turn == 0 {
+			actor = &a.Human{}
+		} else {
+			actor = &a.AI{}
+		}
 		if err := actor.Play(game); err != nil {
 			fmt.Println(err)
 			return
@@ -25,7 +30,15 @@ func main() {
 			return
 		}
 		if game.IsDone() {
-			fmt.Println("round finished")
+			out := ""
+			for _, player := range game.Players {
+				if player.Out {
+					out += player.Name + ", "
+				}
+			}
+			fmt.Printf("Players that came out: %v\n", out[:len(out)-2])
+			fmt.Println("====== round finished ======")
+
 			game.NextRound()
 		}
 	}

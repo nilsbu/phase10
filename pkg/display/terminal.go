@@ -19,8 +19,8 @@ func PrintGame(game *g.Game, visible int) string {
 	}
 	out += fmt.Sprintf("%v\n%v%v\n{%v,%v} - %v's turn",
 		separator, printOutCards(game.OutCards), separator,
-		printCard(-1, false), // any hidden card
-		printCard(game.Trash, true),
+		PrintCard(-1, false), // any hidden card
+		PrintCard(game.Trash, true),
 		game.Players[game.Turn].Name)
 
 	return out
@@ -71,7 +71,7 @@ func printOutCards(outCards []g.Cards) string {
 func printCards(cards g.Cards, visible bool) string {
 	s := "{"
 	for i, c := range cards {
-		s += printCard(c, visible)
+		s += PrintCard(c, visible)
 		if i < len(cards)-1 {
 			s += ","
 		}
@@ -80,7 +80,7 @@ func printCards(cards g.Cards, visible bool) string {
 	return s + "}"
 }
 
-func printCard(c g.Card, visible bool) string {
+func PrintCard(c g.Card, visible bool) string {
 	switch {
 	case !visible:
 		return "X"
