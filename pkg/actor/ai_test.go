@@ -89,6 +89,11 @@ func TestComeOutR(t *testing.T) {
 			[]game.Sequence{{Type: game.Kind, N: 3}, {Type: game.Straight, N: 3}},
 			[]game.Cards{}, false,
 		},
+		{
+			game.Cards{1, 7, 8, 10, 11, 12, 13, 13, 13, 13},
+			[]game.Sequence{{Type: game.Straight, N: 9}},
+			[]game.Cards{{13, 13, 13, 7, 8, 13, 10, 11, 12}}, true,
+		},
 	}
 
 	for _, c := range cs {
@@ -107,9 +112,9 @@ func TestComeOutR(t *testing.T) {
 // func TestScore(t *testing.T) {
 // 	var a, b, c, J game.Card = 10, 11, 12, 13
 // 	fmt.Sprintln(a, b, c, J)
-// 	phase := 10
+// 	phase := 5
 //
-// 	cards := game.Cards{3, 4, 4, 5, 6, 6, 6, 7, 8, a, J}
+// 	cards := game.Cards{1, 7, 8, 10, 11, 12, 13, 13, 13, 13}
 // 	scores := scoreCards(cards, phase)
 // 	for i, card := range cards {
 // 		fmt.Printf("%v: %v\n", card, scores[i])
@@ -117,6 +122,11 @@ func TestComeOutR(t *testing.T) {
 // 	fmt.Println()
 //
 // 	v := 0.0
+// 	baseLine := 0.0
+// 	for _, s := range scoreCards(cards, phase) {
+// 		baseLine += s
+// 	}
+//
 // 	for i := 1; i <= 13; i++ {
 // 		xcards := game.Cards{}
 // 		for _, card := range cards {
@@ -131,11 +141,63 @@ func TestComeOutR(t *testing.T) {
 // 			sum += s
 // 			// }
 // 		}
-// 		v += sum / 13.0
+// 		sum -= baseLine
+// 		v += sum
 // 		fmt.Println(i, sum)
 // 	}
-// 	fmt.Println(v)
+// 	fmt.Println(v / 13)
 // }
+
+func TestShhouldDrawTrash(t *testing.T) {
+	cs := []struct {
+		game *game.Game
+		draw bool
+	}{
+		{
+			&game.Game{
+				Players: []game.Player{
+					{Name: "P1",
+						Cards: game.Cards{2, 3, 4, 6, 6, 7, 8, 11, 12, 13},
+						Phase: 5, Out: false}},
+				OutCards: []game.Cards{},
+				Turn:     0, Trash: 6,
+			},
+			false,
+		},
+		{
+			&game.Game{
+				Players: []game.Player{
+					{Name: "P1",
+						Cards: game.Cards{1, 7, 8, 10, 11, 12, 13, 13, 13, 13},
+						Phase: 6, Out: false}},
+				OutCards: []game.Cards{},
+				Turn:     0, Trash: 1,
+			},
+			false,
+		},
+		{
+			&game.Game{
+				Players: []game.Player{
+					{Name: "P1",
+						Cards: game.Cards{1, 7, 8, 10, 11, 12, 13, 13, 13, 13},
+						Phase: 6, Out: false}},
+				OutCards: []game.Cards{},
+				Turn:     0, Trash: 13,
+			},
+			true,
+		},
+	}
+
+	for _, c := range cs {
+		t.Run("", func(t *testing.T) {
+			ai := &AI{}
+			draw := ai.shouldDrawTrash(c.game)
+			if c.draw != draw {
+				t.Errorf("%v != %v", c.draw, draw)
+			}
+		})
+	}
+}
 
 func TestJokerReplacements(t *testing.T) {
 	cs := []struct {

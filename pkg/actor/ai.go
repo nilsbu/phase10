@@ -35,9 +35,9 @@ func (h *AI) Play(g *game.Game) error {
 func (h *AI) draw(g *game.Game) error {
 	var fromTrash bool
 	if g.Players[g.Turn].Out {
-		fromTrash = false
+		fromTrash = isAppendable(g.Trash, g.OutCards)
 	} else {
-		fromTrash = h.shouldDrawTrashOut(g)
+		fromTrash = h.shouldDrawTrash(g)
 	}
 
 	// if fromTrash {
@@ -73,10 +73,14 @@ func (h *AI) draw(g *game.Game) error {
 	return nil
 }
 
-func (h *AI) shouldDrawTrashOut(g *game.Game) bool {
+func (h *AI) shouldDrawTrash(g *game.Game) bool {
 	seqs, _ := game.GetPhaseSequences(g.Players[g.Turn].Phase)
-	if _, ok := comeOutR(g.Players[g.Turn].Cards, seqs); ok {
-		return isAppendable(g.Trash, g.OutCards)
+
+	if sets, ok := comeOutR(g.Players[g.Turn].Cards, seqs); ok {
+		for _, set := range g.OutCards {
+			sets = append(sets, set)
+		}
+		return isAppendable(g.Trash, sets)
 	}
 
 	cards := game.Cards{}
@@ -84,13 +88,18 @@ func (h *AI) shouldDrawTrashOut(g *game.Game) bool {
 		cards = append(cards, card)
 	}
 	cards = append(cards, g.Trash)
+	sort.Sort(cards)
 	if _, ok := comeOutR(cards, seqs); ok {
 		return true
 	}
 
+	baseLine := 0.0
+	for _, s := range scoreCards(cards, g.Players[g.Turn].Phase) {
+		baseLine += s
+	}
+
 	exp := 0.0
 	vt := 0.0
-	xxx := []float64{}
 	for i := 1; i <= 13; i++ {
 		cards := game.Cards{}
 		for _, card := range g.Players[g.Turn].Cards {
@@ -104,15 +113,15 @@ func (h *AI) shouldDrawTrashOut(g *game.Game) bool {
 		for _, s := range scores {
 			sum += s
 		}
-		exp += sum / 13.0
-		xxx = append(xxx, sum)
+		sum -= baseLine
+		exp += sum
 
 		if g.Trash == game.Card(i) {
 			vt = sum
 		}
 	}
 
-	return vt >= exp
+	return vt >= exp/13.0
 }
 
 func (h *AI) put(g *game.Game) error {
@@ -173,21 +182,18 @@ func comeOutR(cards game.Cards, seqs []game.Sequence) ([]game.Cards, bool) {
 			idxs := game.Cards{} // TODO change name
 			n, j := 0, 0
 			for i := start; i <= 12; i++ {
-				for {
-					if n < len(nums) && nums[n] == game.Card(start)+game.Card(len(idxs)) {
-						idxs = append(idxs, nums[n])
-						n++
-						break
-					} else if j < len(jokers) {
-						idxs = append(idxs, 13)
-						j++
-						break
-					} else {
-						if n >= len(nums) && j >= len(jokers) {
-							break
-						}
-						n++
-					}
+				for n < len(nums) && nums[n] < game.Card(i) {
+					n++
+				}
+
+				if n < len(nums) && nums[n] == game.Card(i) {
+					idxs = append(idxs, nums[n])
+					n++
+				} else if j < len(jokers) {
+					idxs = append(idxs, 13)
+					j++
+				} else {
+					break
 				}
 
 				if len(idxs) >= seqs[0].N {
@@ -417,6 +423,9 @@ func inc(is []int, sets [][][]int) {
 
 func initialCollectChance(count []int, initialJokers int) float64 {
 	sum := sum(count)
+	if sum <= initialJokers {
+		return 1.0
+	}
 
 	c := 0
 	for jokers := initialJokers; jokers <= sum; jokers++ {
