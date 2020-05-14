@@ -273,6 +273,10 @@ func (h *AI) drop(g *game.Game) error {
 
 	if g.Players[(g.Turn+1)%len(g.Players)].Out {
 		for _, card := range prefCards {
+			if card == 13 {
+				// reached jokers, we've gone too far
+				break
+			}
 			if !isAppendable(card, g.OutCards) {
 				return g.Drop(card)
 			}
