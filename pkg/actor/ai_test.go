@@ -1,9 +1,7 @@
 package actor
 
 import (
-	"fmt"
 	"reflect"
-	"sort"
 	"testing"
 
 	"github.com/nilsbu/phase10/pkg/game"
@@ -106,38 +104,38 @@ func TestComeOutR(t *testing.T) {
 	}
 }
 
-func TestScore(t *testing.T) {
-	var a, b, c, J game.Card = 10, 11, 12, 13
-	fmt.Sprintln(a, b, c, J)
-	phase := 10
-
-	cards := game.Cards{3, 4, 4, 5, 6, 6, 6, 7, 8, a, J}
-	scores := scoreCards(cards, phase)
-	for i, card := range cards {
-		fmt.Printf("%v: %v\n", card, scores[i])
-	}
-	fmt.Println()
-
-	v := 0.0
-	for i := 1; i <= 13; i++ {
-		xcards := game.Cards{}
-		for _, card := range cards {
-			xcards = append(xcards, card)
-		}
-		xcards = append(cards, game.Card(i))
-		sort.Sort(xcards)
-		scores := scoreCards(xcards, phase)
-		sum := 0.0
-		for _, s := range scores {
-			// if cards[i] != 13 {
-			sum += s
-			// }
-		}
-		v += sum / 13.0
-		fmt.Println(i, sum)
-	}
-	fmt.Println(v)
-}
+// func TestScore(t *testing.T) {
+// 	var a, b, c, J game.Card = 10, 11, 12, 13
+// 	fmt.Sprintln(a, b, c, J)
+// 	phase := 10
+//
+// 	cards := game.Cards{3, 4, 4, 5, 6, 6, 6, 7, 8, a, J}
+// 	scores := scoreCards(cards, phase)
+// 	for i, card := range cards {
+// 		fmt.Printf("%v: %v\n", card, scores[i])
+// 	}
+// 	fmt.Println()
+//
+// 	v := 0.0
+// 	for i := 1; i <= 13; i++ {
+// 		xcards := game.Cards{}
+// 		for _, card := range cards {
+// 			xcards = append(xcards, card)
+// 		}
+// 		xcards = append(cards, game.Card(i))
+// 		sort.Sort(xcards)
+// 		scores := scoreCards(xcards, phase)
+// 		sum := 0.0
+// 		for _, s := range scores {
+// 			// if cards[i] != 13 {
+// 			sum += s
+// 			// }
+// 		}
+// 		v += sum / 13.0
+// 		fmt.Println(i, sum)
+// 	}
+// 	fmt.Println(v)
+// }
 
 func TestJokerReplacements(t *testing.T) {
 	cs := []struct {
@@ -211,6 +209,75 @@ func TestMultiBinomial(t *testing.T) {
 			mb := multiBinomial(c.count)
 			if c.mb != mb {
 				t.Errorf("%v != %v", c.mb, mb)
+			}
+		})
+	}
+}
+
+func TestIsAppendable(t *testing.T) {
+	cs := []struct {
+		card       game.Card
+		out        []game.Cards
+		appendable bool
+	}{
+		{1, []game.Cards{}, false},
+		{1, []game.Cards{{13, 1, 1}}, true},
+		{2, []game.Cards{{13, 1, 1}}, false},
+		{4, []game.Cards{{1, 2, 3}}, true},
+		{4, []game.Cards{{5, 5, 5}, {1, 13, 13}}, true},
+		{4, []game.Cards{{5, 5, 5}, {13, 13, 13}}, true},
+	}
+
+	for _, c := range cs {
+		t.Run("", func(t *testing.T) {
+			appendable := isAppendable(c.card, c.out)
+			if appendable && !c.appendable {
+				t.Errorf("card '%v' must not be appendable", c.card)
+			} else if !appendable && c.appendable {
+				t.Errorf("card '%v' must be appendable", c.card)
+			}
+		})
+	}
+}
+
+func TestSortByScore(t *testing.T) {
+	cs := []struct {
+		cards  game.Cards
+		scores []float64
+		sorted game.Cards
+	}{
+		{
+			game.Cards{},
+			[]float64{},
+			game.Cards{},
+		},
+		{
+			game.Cards{1},
+			[]float64{1.0},
+			game.Cards{1},
+		},
+		{
+			game.Cards{1, 2},
+			[]float64{1.0, .8},
+			game.Cards{2, 1},
+		},
+		{
+			game.Cards{1, 1, 2, 3},
+			[]float64{1.0, 0.1, .8, .4},
+			game.Cards{1, 3, 2, 1},
+		},
+		{
+			game.Cards{1, 1, 2, 3},
+			[]float64{1.0, 0.4, .8, .4},
+			game.Cards{1, 3, 2, 1},
+		},
+	}
+
+	for _, c := range cs {
+		t.Run("", func(t *testing.T) {
+			sorted := sortByScore(c.cards, c.scores)
+			if !reflect.DeepEqual(c.sorted, sorted) {
+				t.Errorf("%v != %v", c.sorted, sorted)
 			}
 		})
 	}

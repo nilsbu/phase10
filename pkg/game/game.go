@@ -18,6 +18,59 @@ func (cs Cards) Len() int           { return len(cs) }
 func (cs Cards) Swap(i, j int)      { cs[i], cs[j] = cs[j], cs[i] }
 func (cs Cards) Less(i, j int) bool { return cs[i] < cs[j] }
 
+type CardSequence []Cards
+
+func (cs CardSequence) Len() int      { return len(cs) }
+func (cs CardSequence) Swap(i, j int) { cs[i], cs[j] = cs[j], cs[i] }
+func (cs CardSequence) Less(i, j int) bool {
+	vi, vj := Validate(cs[i]), Validate(cs[j])
+
+	if vi.Type > vj.Type {
+		return true
+	} else if vi.Type < vj.Type {
+		return false
+	} else if vi.Type == Invalid {
+		return vi.N > vj.N
+	} else if vi.Type == Kind {
+		var ni, nj Card
+		for _, c := range cs[i] {
+			ni = c
+			if c != 13 {
+				break
+			}
+		}
+		for _, c := range cs[j] {
+			nj = c
+			if c != 13 {
+				break
+			}
+		}
+		if ni != nj {
+			return ni < nj
+		}
+		return vi.N > vj.N
+	} else {
+		fi, fj := firstCardOfStraight(cs[i]), firstCardOfStraight(cs[j])
+		if fi > fj {
+			return false
+		} else if fi < fj {
+			return true
+		}
+		return vi.N > vj.N
+	}
+}
+
+func firstCardOfStraight(cs Cards) Card {
+	f := Card(-1)
+	for i, c := range cs {
+		if c != 13 {
+			f = c - Card(i)
+			break
+		}
+	}
+	return f
+}
+
 type Player struct {
 	Name  string
 	Cards Cards
@@ -27,7 +80,7 @@ type Player struct {
 
 type Game struct {
 	Players  []Player
-	OutCards []Cards
+	OutCards CardSequence
 	Turn     int
 	Trash    Card
 }
@@ -90,6 +143,8 @@ func (g *Game) Drop(card Card) error {
 
 	g.Turn = (g.Turn + 1) % len(g.Players)
 
+	sort.Sort(g.OutCards)
+
 	return nil
 }
 
@@ -131,7 +186,7 @@ func (g *Game) ComeOut(cardss []Cards) error {
 
 	var seqs []Sequence
 	for _, cards := range cardss {
-		seqs = append(seqs, validate(cards))
+		seqs = append(seqs, Validate(cards))
 	}
 
 	if !isPhaseFulfilled(seqs, g.Players[g.Turn].Phase) {
@@ -166,7 +221,7 @@ func (g *Game) Append(card Card, sequence int, left bool) error {
 		newSeq = append(g.OutCards[sequence], card)
 	}
 
-	if seq := validate(newSeq); seq.Type == Invalid || seq.Type == Ambiguous {
+	if seq := Validate(newSeq); seq.Type == Invalid || seq.Type == Ambiguous {
 		return errors.New("sequence invalid")
 	}
 

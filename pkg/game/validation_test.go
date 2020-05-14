@@ -72,7 +72,7 @@ func TestValidate(t *testing.T) {
 
 	for _, c := range cs {
 		t.Run(c.name, func(t *testing.T) {
-			seq := validate(c.cards)
+			seq := Validate(c.cards)
 
 			if seq.Type != c.seq.Type {
 				t.Errorf("expected type %v but got %v", c.seq.Type, seq.Type)

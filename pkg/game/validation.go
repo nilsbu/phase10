@@ -4,8 +4,8 @@ type SeqType int
 
 const (
 	Invalid SeqType = iota
-	Straight
 	Kind
+	Straight
 	Ambiguous
 )
 
@@ -25,7 +25,7 @@ func (s Sequence) Fulfills(target Sequence) bool {
 	return false
 }
 
-func validate(cards Cards) Sequence {
+func Validate(cards Cards) Sequence {
 	if len(cards) == 0 {
 		return Sequence{Invalid, 0}
 	}

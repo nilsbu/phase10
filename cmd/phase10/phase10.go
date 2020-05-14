@@ -15,7 +15,7 @@ func main() {
 
 	for {
 		var actor a.Actor
-		if game.Turn == 0 {
+		if game.Turn == len(game.Players)-1 {
 			actor = &a.Human{}
 		} else {
 			actor = &a.AI{}

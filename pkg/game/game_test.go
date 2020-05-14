@@ -3,6 +3,7 @@ package game
 import (
 	"math/rand"
 	"reflect"
+	"sort"
 	"testing"
 )
 
@@ -150,9 +151,9 @@ func TestComeOut(t *testing.T) {
 	cs := []struct {
 		name       string
 		game       *Game
-		cardss     []Cards
+		cardss     CardSequence
 		cardsAfter Cards
-		outAfter   []Cards
+		outAfter   CardSequence
 		err        bool
 	}{
 		{
@@ -371,7 +372,7 @@ func TestAppend(t *testing.T) {
 		seq        int
 		left       bool
 		cardsAfter Cards
-		outAfter   []Cards
+		outAfter   CardSequence
 		err        bool
 	}{
 		{
@@ -712,6 +713,50 @@ func TestNextRound(t *testing.T) {
 			if !reflect.DeepEqual(c.gamePre, c.gamePost) {
 				t.Errorf("game is wrong\nwant: %v\nhas:  %v",
 					c.gamePost, c.gamePre)
+			}
+		})
+	}
+}
+
+const J = Card(13)
+
+func TestSortSequences(t *testing.T) {
+	cs := []struct {
+		seq, seqSorted CardSequence
+	}{
+		{CardSequence{{J, 1, J}},
+			CardSequence{{J, 1, J}}},
+		{CardSequence{{3, 3, 3}, {J, 1, J}},
+			CardSequence{{J, 1, J}, {3, 3, 3}}},
+		{CardSequence{{1, 1, 1, 1}, {J, 1, J}},
+			CardSequence{{1, 1, 1, 1}, {J, 1, J}}},
+		{CardSequence{{1, 1, 1, 2}, {J, 1, J}},
+			CardSequence{{J, 1, J}, {1, 1, 1, 2}}},
+		{CardSequence{},
+			CardSequence{}},
+		{CardSequence{{3, J, J}, {3, 4, 5, 6}},
+			CardSequence{{3, J, J}, {3, 4, 5, 6}}},
+		{CardSequence{{3, J, 4}, {3, 3, 5, 6}},
+			CardSequence{{3, 3, 5, 6}, {3, J, 4}}},
+		{CardSequence{{3, 4, 5, 6}, {3, 4, 5, 6, 7}},
+			CardSequence{{3, 4, 5, 6, 7}, {3, 4, 5, 6}}},
+		{CardSequence{{3, 4, 5, 6}, {4, 5, 6, 7}, {1, 2, 3}},
+			CardSequence{{1, 2, 3}, {3, 4, 5, 6}, {4, 5, 6, 7}}},
+		{CardSequence{{3, 4, 5, 6}, {4, 5, 6, 7}, {}},
+			CardSequence{{3, 4, 5, 6}, {4, 5, 6, 7}, {}}},
+		{CardSequence{{13, 4, 5, 6}, {4, 5, 6, 7}},
+			CardSequence{{13, 4, 5, 6}, {4, 5, 6, 7}}},
+		{CardSequence{{13, 13, 4}, {4, 5, 6, 7}},
+			CardSequence{{13, 13, 4}, {4, 5, 6, 7}}},
+	}
+
+	for _, c := range cs {
+		t.Run("", func(t *testing.T) {
+			sort.Sort(c.seq)
+
+			if !reflect.DeepEqual(c.seq, c.seqSorted) {
+				t.Errorf("game is wrong\nwant: %v\nhas:  %v",
+					c.seq, c.seqSorted)
 			}
 		})
 	}

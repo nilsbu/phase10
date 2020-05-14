@@ -6,7 +6,6 @@ import (
 	"math/big"
 	"sort"
 
-	"github.com/nilsbu/phase10/pkg/display"
 	"github.com/nilsbu/phase10/pkg/game"
 )
 
@@ -41,13 +40,13 @@ func (h *AI) draw(g *game.Game) error {
 		fromTrash = h.shouldDrawTrashOut(g)
 	}
 
-	if fromTrash {
-		fmt.Printf("%v drew %v from trash\n",
-			g.Players[g.Turn].Name, display.PrintCard(g.Trash, true))
-	} else {
-		fmt.Printf("%v drew from stack and left %v on the stack\n",
-			g.Players[g.Turn].Name, display.PrintCard(g.Trash, true))
-	}
+	// if fromTrash {
+	// 	fmt.Printf("%v drew %v from trash\n",
+	// 		g.Players[g.Turn].Name, display.PrintCard(g.Trash, true))
+	// } else {
+	// 	fmt.Printf("%v drew from stack and left %v on the stack\n",
+	// 		g.Players[g.Turn].Name, display.PrintCard(g.Trash, true))
+	// }
 	oldT := g.Trash
 	scoresX := scoreCards(g.Players[g.Turn].Cards, g.Players[g.Turn].Phase)
 	g.Draw(fromTrash)
@@ -77,19 +76,14 @@ func (h *AI) draw(g *game.Game) error {
 func (h *AI) shouldDrawTrashOut(g *game.Game) bool {
 	seqs, _ := game.GetPhaseSequences(g.Players[g.Turn].Phase)
 	if _, ok := comeOutR(g.Players[g.Turn].Cards, seqs); ok {
-		// TODO: decide if can be appended
-		return false
-	}
-
-	if _, ok := comeOutR(g.Players[g.Turn].Cards, seqs); ok {
-		// TODO: decide if can be appended
-		return false
+		return isAppendable(g.Trash, g.OutCards)
 	}
 
 	cards := game.Cards{}
 	for _, card := range g.Players[g.Turn].Cards {
 		cards = append(cards, card)
 	}
+	cards = append(cards, g.Trash)
 	if _, ok := comeOutR(cards, seqs); ok {
 		return true
 	}
@@ -252,27 +246,67 @@ func appendCards(g *game.Game) error {
 	return nil
 }
 
-func (h *AI) drop(g *game.Game) error {
-	scores := scoreCards(g.Players[g.Turn].Cards, g.Players[g.Turn].Phase)
-	minScore := 1e+20
-	minI := 0
-	for i := range scores {
-		if minScore > scores[i] {
-			minScore = scores[i]
-			minI = i
+func isAppendable(card game.Card, out []game.Cards) bool {
+	for _, seq := range out {
+		seqCopy := game.Cards{card}
+		for _, c := range seq {
+			seqCopy = append(seqCopy, c)
+		}
+
+		if seq := game.Validate(seqCopy); seq.Type != game.Invalid {
+			return true
+		}
+
+		seqCopy = append(seqCopy[1:], card)
+
+		if seq := game.Validate(seqCopy); seq.Type != game.Invalid {
+			return true
 		}
 	}
 
-	oldT := g.Turn
-	if err := g.Drop(g.Players[g.Turn].Cards[minI]); err != nil {
-		return err
+	return false
+}
+
+func (h *AI) drop(g *game.Game) error {
+	scores := scoreCards(g.Players[g.Turn].Cards, g.Players[g.Turn].Phase)
+	prefCards := sortByScore(g.Players[g.Turn].Cards, scores)
+
+	if g.Players[(g.Turn+1)%len(g.Players)].Out {
+		for _, card := range prefCards {
+			if !isAppendable(card, g.OutCards) {
+				return g.Drop(card)
+			}
+		}
 	}
 
-	fmt.Printf("%v dropped %v\n",
-		g.Players[oldT].Name,
-		display.PrintCard(g.Trash, true))
+	return g.Drop(prefCards[0])
+}
 
-	return nil
+type cardScore struct {
+	card  game.Card
+	score float64
+}
+
+type cardScores []cardScore
+
+func (cs cardScores) Len() int           { return len(cs) }
+func (cs cardScores) Swap(i, j int)      { cs[i], cs[j] = cs[j], cs[i] }
+func (cs cardScores) Less(i, j int) bool { return cs[i].score < cs[j].score }
+
+func sortByScore(cards game.Cards, scores []float64) game.Cards {
+	cs := cardScores{}
+	for i := range cards {
+		cs = append(cs, cardScore{cards[i], scores[i]})
+	}
+
+	sort.Sort(cs)
+
+	out := game.Cards{}
+	for _, pair := range cs {
+		out = append(out, pair.card)
+	}
+
+	return out
 }
 
 func scoreCards(cards game.Cards, phase int) []float64 {
